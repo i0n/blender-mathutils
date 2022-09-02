@@ -80,7 +80,9 @@ files_blenlib = (
     "source/blender/blenlib/BLI_math_rotation.h",
     "source/blender/blenlib/BLI_math_solvers.h",
     "source/blender/blenlib/BLI_math_statistics.h",
+    "source/blender/blenlib/BLI_math_time.h",
     "source/blender/blenlib/BLI_math_vector.h",
+    "source/blender/blenlib/BLI_simd.h",
     "source/blender/blenlib/BLI_strict_flags.h",
     "source/blender/blenlib/BLI_sys_types.h",
     "source/blender/blenlib/BLI_system.h",
@@ -102,10 +104,20 @@ files_blenlib = (
     )
 
 # strip "source/blender"
+files_imbuf_level = 2
+files_imbuf_dest = "src"
+files_imbuf = (
+    "source/blender/imbuf/IMB_colormanagement.h",
+    "source/blender/imbuf/intern/IMB_colormanagement_intern.h",
+    "source/blender/imbuf/intern/colormanagement_inline.c",
+    )
+
+# strip "source/blender"
 files_makesdna_level = 2
 files_makesdna_dest = "src"
 files_makesdna = (
     "source/blender/makesdna/DNA_vec_types.h",
+    "source/blender/makesdna/DNA_listBase.h",
     )
 
 
@@ -121,5 +133,6 @@ files_pygeneric = (
 
 update_source(files_mathutils, files_mathutils_dest, files_mathutils_level)
 update_source(files_blenlib, files_blenlib_dest, files_blenlib_level)
+update_source(files_imbuf, files_imbuf_dest, files_imbuf_level)
 update_source(files_makesdna, files_makesdna_dest, files_makesdna_level)
 update_source(files_pygeneric, files_pygeneric_dest, files_pygeneric_level)

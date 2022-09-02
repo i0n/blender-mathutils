@@ -35,6 +35,7 @@ to the blender repository is used so the source never gets out of sync.
 include_dirs = [
     "src/stubs",
     "src/blenlib",
+    "src/imbuf",
     "src/makesdna",
     ]
 
@@ -102,8 +103,13 @@ header_files = [
     "src/blenlib/BLI_utildefines.h",
     "src/blenlib/BLI_utildefines_variadic.h",
 
+    # * imbuf *
+    "src/imbuf/IMB_colormanagement.h",
+    "src/imbuf/IMB_colormanagement_intern.h",
+
     # * DNA *
     "src/makesdna/DNA_vec_types.h",
+    "src/makesdna/DNA_listBase.h",
 
     # * mathutils *
     "src/mathutils/mathutils.h",

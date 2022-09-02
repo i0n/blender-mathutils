@@ -1,37 +1,16 @@
-/*
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
- * The Original Code is Copyright (C) 2001-2002 by NaN Holding BV.
- * All rights reserved.
- *
- * The Original Code is: some of this file.
- *
- * */
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright 2001-2002 NaN Holding BV. All rights reserved. */
 
 /** \file
  * \ingroup bli
  */
-
-#include <assert.h>
 
 #include "BLI_math.h"
 #include "BLI_utildefines.h"
 
 #include "BLI_strict_flags.h"
 
-void hsv_to_rgb(float h, float s, float v, float *r, float *g, float *b)
+void hsv_to_rgb(float h, float s, float v, float *r_r, float *r_g, float *r_b)
 {
   float nr, ng, nb;
 
@@ -43,12 +22,12 @@ void hsv_to_rgb(float h, float s, float v, float *r, float *g, float *b)
   CLAMP(nb, 0.0f, 1.0f);
   CLAMP(ng, 0.0f, 1.0f);
 
-  *r = ((nr - 1.0f) * s + 1.0f) * v;
-  *g = ((ng - 1.0f) * s + 1.0f) * v;
-  *b = ((nb - 1.0f) * s + 1.0f) * v;
+  *r_r = ((nr - 1.0f) * s + 1.0f) * v;
+  *r_g = ((ng - 1.0f) * s + 1.0f) * v;
+  *r_b = ((nb - 1.0f) * s + 1.0f) * v;
 }
 
-void hsl_to_rgb(float h, float s, float l, float *r, float *g, float *b)
+void hsl_to_rgb(float h, float s, float l, float *r_r, float *r_g, float *r_b)
 {
   float nr, ng, nb, chroma;
 
@@ -62,24 +41,22 @@ void hsl_to_rgb(float h, float s, float l, float *r, float *g, float *b)
 
   chroma = (1.0f - fabsf(2.0f * l - 1.0f)) * s;
 
-  *r = (nr - 0.5f) * chroma + l;
-  *g = (ng - 0.5f) * chroma + l;
-  *b = (nb - 0.5f) * chroma + l;
+  *r_r = (nr - 0.5f) * chroma + l;
+  *r_g = (ng - 0.5f) * chroma + l;
+  *r_b = (nb - 0.5f) * chroma + l;
 }
 
-/* convenience function for now */
 void hsv_to_rgb_v(const float hsv[3], float r_rgb[3])
 {
   hsv_to_rgb(hsv[0], hsv[1], hsv[2], &r_rgb[0], &r_rgb[1], &r_rgb[2]);
 }
 
-/* convenience function for now */
 void hsl_to_rgb_v(const float hsl[3], float r_rgb[3])
 {
   hsl_to_rgb(hsl[0], hsl[1], hsl[2], &r_rgb[0], &r_rgb[1], &r_rgb[2]);
 }
 
-void rgb_to_yuv(float r, float g, float b, float *ly, float *lu, float *lv, int colorspace)
+void rgb_to_yuv(float r, float g, float b, float *r_y, float *r_u, float *r_v, int colorspace)
 {
   float y, u, v;
 
@@ -91,18 +68,19 @@ void rgb_to_yuv(float r, float g, float b, float *ly, float *lu, float *lv, int 
       break;
     case BLI_YUV_ITU_BT709:
     default:
+      BLI_assert(colorspace == BLI_YUV_ITU_BT709);
       y = 0.2126f * r + 0.7152f * g + 0.0722f * b;
       u = -0.09991f * r - 0.33609f * g + 0.436f * b;
       v = 0.615f * r - 0.55861f * g - 0.05639f * b;
       break;
   }
 
-  *ly = y;
-  *lu = u;
-  *lv = v;
+  *r_y = y;
+  *r_u = u;
+  *r_v = v;
 }
 
-void yuv_to_rgb(float y, float u, float v, float *lr, float *lg, float *lb, int colorspace)
+void yuv_to_rgb(float y, float u, float v, float *r_r, float *r_g, float *r_b, int colorspace)
 {
   float r, g, b;
 
@@ -113,21 +91,20 @@ void yuv_to_rgb(float y, float u, float v, float *lr, float *lg, float *lb, int 
       b = y + 2.032f * u;
       break;
     case BLI_YUV_ITU_BT709:
+    default:
+      BLI_assert(colorspace == BLI_YUV_ITU_BT709);
       r = y + 1.28033f * v;
       g = y - 0.21482f * u - 0.38059f * v;
       b = y + 2.12798f * u;
       break;
   }
 
-  *lr = r;
-  *lg = g;
-  *lb = b;
+  *r_r = r;
+  *r_g = g;
+  *r_b = b;
 }
 
-/* The RGB inputs are supposed gamma corrected and in the range 0 - 1.0f
- *
- * Output YCC have a range of 16-235 and 16-240 except with JFIF_0_255 where the range is 0-255 */
-void rgb_to_ycc(float r, float g, float b, float *ly, float *lcb, float *lcr, int colorspace)
+void rgb_to_ycc(float r, float g, float b, float *r_y, float *r_cb, float *r_cr, int colorspace)
 {
   float sr, sg, sb;
   float y = 128.0f, cr = 128.0f, cb = 128.0f;
@@ -153,21 +130,23 @@ void rgb_to_ycc(float r, float g, float b, float *ly, float *lcb, float *lcr, in
       cr = (0.5f * sr) - (0.41869f * sg) - (0.08131f * sb) + 128.0f;
       break;
     default:
-      BLI_assert(!"invalid colorspace");
+      BLI_assert_msg(0, "invalid colorspace");
       break;
   }
 
-  *ly = y;
-  *lcb = cb;
-  *lcr = cr;
+  *r_y = y;
+  *r_cb = cb;
+  *r_cr = cr;
 }
 
-/* YCC input have a range of 16-235 and 16-240 except with JFIF_0_255 where the range is 0-255 */
-/* RGB outputs are in the range 0 - 1.0f */
-
-/* FIXME comment above must be wrong because BLI_YCC_ITU_BT601 y 16.0 cr 16.0 -> r -0.7009 */
-void ycc_to_rgb(float y, float cb, float cr, float *lr, float *lg, float *lb, int colorspace)
+void ycc_to_rgb(float y, float cb, float cr, float *r_r, float *r_g, float *r_b, int colorspace)
 {
+  /* FIXME the following comment must be wrong because:
+   * BLI_YCC_ITU_BT601 y 16.0 cr 16.0 -> r -0.7009. */
+
+  /* YCC input have a range of 16-235 and 16-240 except with JFIF_0_255 where the range is 0-255
+   * RGB outputs are in the range 0 - 1.0f. */
+
   float r = 128.0f, g = 128.0f, b = 128.0f;
 
   switch (colorspace) {
@@ -187,15 +166,15 @@ void ycc_to_rgb(float y, float cb, float cr, float *lr, float *lg, float *lb, in
       b = y + 1.772f * cb - 226.816f;
       break;
     default:
-      BLI_assert(0);
+      BLI_assert_unreachable();
       break;
   }
-  *lr = r / 255.0f;
-  *lg = g / 255.0f;
-  *lb = b / 255.0f;
+  *r_r = r / 255.0f;
+  *r_g = g / 255.0f;
+  *r_b = b / 255.0f;
 }
 
-void hex_to_rgb(char *hexcol, float *r, float *g, float *b)
+void hex_to_rgb(const char *hexcol, float *r_r, float *r_g, float *r_b)
 {
   unsigned int ri, gi, bi;
 
@@ -214,19 +193,19 @@ void hex_to_rgb(char *hexcol, float *r, float *g, float *b)
   }
   else {
     /* avoid using un-initialized vars */
-    *r = *g = *b = 0.0f;
+    *r_r = *r_g = *r_b = 0.0f;
     return;
   }
 
-  *r = (float)ri * (1.0f / 255.0f);
-  *g = (float)gi * (1.0f / 255.0f);
-  *b = (float)bi * (1.0f / 255.0f);
-  CLAMP(*r, 0.0f, 1.0f);
-  CLAMP(*g, 0.0f, 1.0f);
-  CLAMP(*b, 0.0f, 1.0f);
+  *r_r = (float)ri * (1.0f / 255.0f);
+  *r_g = (float)gi * (1.0f / 255.0f);
+  *r_b = (float)bi * (1.0f / 255.0f);
+  CLAMP(*r_r, 0.0f, 1.0f);
+  CLAMP(*r_g, 0.0f, 1.0f);
+  CLAMP(*r_b, 0.0f, 1.0f);
 }
 
-void rgb_to_hsv(float r, float g, float b, float *lh, float *ls, float *lv)
+void rgb_to_hsv(float r, float g, float b, float *r_h, float *r_s, float *r_v)
 {
   float k = 0.0f;
   float chroma;
@@ -245,25 +224,24 @@ void rgb_to_hsv(float r, float g, float b, float *lh, float *ls, float *lv)
 
   chroma = r - min_gb;
 
-  *lh = fabsf(k + (g - b) / (6.0f * chroma + 1e-20f));
-  *ls = chroma / (r + 1e-20f);
-  *lv = r;
+  *r_h = fabsf(k + (g - b) / (6.0f * chroma + 1e-20f));
+  *r_s = chroma / (r + 1e-20f);
+  *r_v = r;
 }
 
-/* convenience function for now */
 void rgb_to_hsv_v(const float rgb[3], float r_hsv[3])
 {
   rgb_to_hsv(rgb[0], rgb[1], rgb[2], &r_hsv[0], &r_hsv[1], &r_hsv[2]);
 }
 
-void rgb_to_hsl(float r, float g, float b, float *lh, float *ls, float *ll)
+void rgb_to_hsl(float r, float g, float b, float *r_h, float *r_s, float *r_l)
 {
   const float cmax = max_fff(r, g, b);
   const float cmin = min_fff(r, g, b);
-  float h, s, l = min_ff(1.0, (cmax + cmin) / 2.0f);
+  float h, s, l = min_ff(1.0f, (cmax + cmin) / 2.0f);
 
   if (cmax == cmin) {
-    h = s = 0.0f;  // achromatic
+    h = s = 0.0f; /* achromatic */
   }
   else {
     float d = cmax - cmin;
@@ -280,29 +258,29 @@ void rgb_to_hsl(float r, float g, float b, float *lh, float *ls, float *ll)
   }
   h /= 6.0f;
 
-  *lh = h;
-  *ls = s;
-  *ll = l;
+  *r_h = h;
+  *r_s = s;
+  *r_l = l;
 }
 
-void rgb_to_hsl_compat(float r, float g, float b, float *lh, float *ls, float *ll)
+void rgb_to_hsl_compat(float r, float g, float b, float *r_h, float *r_s, float *r_l)
 {
-  const float orig_s = *ls;
-  const float orig_h = *lh;
+  const float orig_s = *r_s;
+  const float orig_h = *r_h;
 
-  rgb_to_hsl(r, g, b, lh, ls, ll);
+  rgb_to_hsl(r, g, b, r_h, r_s, r_l);
 
-  if (*ll <= 0.0f) {
-    *lh = orig_h;
-    *ls = orig_s;
+  if (*r_l <= 0.0f) {
+    *r_h = orig_h;
+    *r_s = orig_s;
   }
-  else if (*ls <= 0.0f) {
-    *lh = orig_h;
-    *ls = orig_s;
+  else if (*r_s <= 0.0f) {
+    *r_h = orig_h;
+    *r_s = orig_s;
   }
 
-  if (*lh == 0.0f && orig_h >= 1.0f) {
-    *lh = 1.0f;
+  if (*r_h == 0.0f && orig_h >= 1.0f) {
+    *r_h = 1.0f;
   }
 }
 
@@ -311,40 +289,37 @@ void rgb_to_hsl_compat_v(const float rgb[3], float r_hsl[3])
   rgb_to_hsl_compat(rgb[0], rgb[1], rgb[2], &r_hsl[0], &r_hsl[1], &r_hsl[2]);
 }
 
-/* convenience function for now */
 void rgb_to_hsl_v(const float rgb[3], float r_hsl[3])
 {
   rgb_to_hsl(rgb[0], rgb[1], rgb[2], &r_hsl[0], &r_hsl[1], &r_hsl[2]);
 }
 
-void rgb_to_hsv_compat(float r, float g, float b, float *lh, float *ls, float *lv)
+void rgb_to_hsv_compat(float r, float g, float b, float *r_h, float *r_s, float *r_v)
 {
-  const float orig_h = *lh;
-  const float orig_s = *ls;
+  const float orig_h = *r_h;
+  const float orig_s = *r_s;
 
-  rgb_to_hsv(r, g, b, lh, ls, lv);
+  rgb_to_hsv(r, g, b, r_h, r_s, r_v);
 
-  if (*lv <= 1e-8) {
+  if (*r_v <= 1e-8) {
     /* Very low v values will affect the hs values, correct them in post. */
-    *lh = orig_h;
-    *ls = orig_s;
+    *r_h = orig_h;
+    *r_s = orig_s;
   }
-  else if (*ls <= 1e-8) {
-    *lh = orig_h;
+  else if (*r_s <= 1e-8) {
+    *r_h = orig_h;
   }
 
-  if (*lh == 0.0f && orig_h >= 1.0f) {
-    *lh = 1.0f;
+  if (*r_h == 0.0f && orig_h >= 1.0f) {
+    *r_h = 1.0f;
   }
 }
 
-/* convenience function for now */
 void rgb_to_hsv_compat_v(const float rgb[3], float r_hsv[3])
 {
   rgb_to_hsv_compat(rgb[0], rgb[1], rgb[2], &r_hsv[0], &r_hsv[1], &r_hsv[2]);
 }
 
-/* clamp hsv to usable values */
 void hsv_clamp_v(float hsv[3], float v_max)
 {
   if (UNLIKELY(hsv[0] < 0.0f || hsv[0] > 1.0f)) {
@@ -354,12 +329,6 @@ void hsv_clamp_v(float hsv[3], float v_max)
   CLAMP(hsv[2], 0.0f, v_max);
 }
 
-/**
- * We define a 'cpack' here as a (3 byte color code)
- * number that can be expressed like 0xFFAA66 or so.
- * For that reason it is sensitive for endianness... with this function it works correctly.
- * \see #imm_cpack
- */
 unsigned int hsv_to_cpack(float h, float s, float v)
 {
   unsigned int r, g, b;
@@ -397,11 +366,11 @@ unsigned int rgb_to_cpack(float r, float g, float b)
   return (ir + (ig * 256) + (ib * 256 * 256));
 }
 
-void cpack_to_rgb(unsigned int col, float *r, float *g, float *b)
+void cpack_to_rgb(unsigned int col, float *r_r, float *r_g, float *r_b)
 {
-  *r = ((float)(((col)) & 0xFF)) * (1.0f / 255.0f);
-  *g = ((float)(((col) >> 8) & 0xFF)) * (1.0f / 255.0f);
-  *b = ((float)(((col) >> 16) & 0xFF)) * (1.0f / 255.0f);
+  *r_r = ((float)(((col)) & 0xFF)) * (1.0f / 255.0f);
+  *r_g = ((float)(((col) >> 8) & 0xFF)) * (1.0f / 255.0f);
+  *r_b = ((float)(((col) >> 16) & 0xFF)) * (1.0f / 255.0f);
 }
 
 void rgb_uchar_to_float(float r_col[3], const unsigned char col_ub[3])
@@ -436,9 +405,8 @@ float srgb_to_linearrgb(float c)
   if (c < 0.04045f) {
     return (c < 0.0f) ? 0.0f : c * (1.0f / 12.92f);
   }
-  else {
-    return powf((c + 0.055f) * (1.0f / 1.055f), 2.4f);
-  }
+
+  return powf((c + 0.055f) * (1.0f / 1.055f), 2.4f);
 }
 
 float linearrgb_to_srgb(float c)
@@ -446,9 +414,8 @@ float linearrgb_to_srgb(float c)
   if (c < 0.0031308f) {
     return (c < 0.0f) ? 0.0f : c * 12.92f;
   }
-  else {
-    return 1.055f * powf(c, 1.0f / 2.4f) - 0.055f;
-  }
+
+  return 1.055f * powf(c, 1.0f / 2.4f) - 0.055f;
 }
 
 void minmax_rgb(short c[3])
@@ -475,12 +442,6 @@ void minmax_rgb(short c[3])
   }
 }
 
-/* If the requested RGB shade contains a negative weight for
- * one of the primaries, it lies outside the color gamut
- * accessible from the given triple of primaries.  Desaturate
- * it by adding white, equal quantities of R, G, and B, enough
- * to make RGB all positive.  The function returns 1 if the
- * components were modified, zero otherwise.*/
 int constrain_rgb(float *r, float *g, float *b)
 {
   /* Amount of white needed */
@@ -500,8 +461,12 @@ int constrain_rgb(float *r, float *g, float *b)
 
 /* ********************** lift/gamma/gain / ASC-CDL conversion ********************************* */
 
-void lift_gamma_gain_to_asc_cdl(
-    float *lift, float *gamma, float *gain, float *offset, float *slope, float *power)
+void lift_gamma_gain_to_asc_cdl(const float *lift,
+                                const float *gamma,
+                                const float *gain,
+                                float *offset,
+                                float *slope,
+                                float *power)
 {
   int c;
   for (c = 0; c < 3; c++) {
@@ -518,7 +483,6 @@ void lift_gamma_gain_to_asc_cdl(
 
 /* ************************************* other ************************************************* */
 
-/* Applies an hue offset to a float rgb color */
 void rgb_float_set_hue_float_offset(float rgb[3], float hue_offset)
 {
   float hsv[3];
@@ -536,7 +500,6 @@ void rgb_float_set_hue_float_offset(float rgb[3], float hue_offset)
   hsv_to_rgb(hsv[0], hsv[1], hsv[2], rgb, rgb + 1, rgb + 2);
 }
 
-/* Applies an hue offset to a byte rgb color */
 void rgb_byte_set_hue_float_offset(unsigned char rgb[3], float hue_offset)
 {
   float rgb_float[3];
@@ -632,82 +595,5 @@ void BLI_init_srgb_conversion(void)
     i = hipart(f);
     /* replace entries so byte->float->byte does not change the data: */
     BLI_color_to_srgb_table[i] = (unsigned short)(b * 0x100);
-  }
-}
-
-/* ****************************** blackbody ******************************** */
-
-/* Calculate color in range 800..12000 using an approximation
- * a/x+bx+c for R and G and ((at + b)t + c)t + d) for B
- * Max absolute error for RGB is (0.00095, 0.00077, 0.00057),
- * which is enough to get the same 8 bit/channel color.
- */
-
-static const float blackbody_table_r[6][3] = {
-    {2.52432244e+03f, -1.06185848e-03f, 3.11067539e+00f},
-    {3.37763626e+03f, -4.34581697e-04f, 1.64843306e+00f},
-    {4.10671449e+03f, -8.61949938e-05f, 6.41423749e-01f},
-    {4.66849800e+03f, 2.85655028e-05f, 1.29075375e-01f},
-    {4.60124770e+03f, 2.89727618e-05f, 1.48001316e-01f},
-    {3.78765709e+03f, 9.36026367e-06f, 3.98995841e-01f},
-};
-
-static const float blackbody_table_g[6][3] = {
-    {-7.50343014e+02f, 3.15679613e-04f, 4.73464526e-01f},
-    {-1.00402363e+03f, 1.29189794e-04f, 9.08181524e-01f},
-    {-1.22075471e+03f, 2.56245413e-05f, 1.20753416e+00f},
-    {-1.42546105e+03f, -4.01730887e-05f, 1.44002695e+00f},
-    {-1.18134453e+03f, -2.18913373e-05f, 1.30656109e+00f},
-    {-5.00279505e+02f, -4.59745390e-06f, 1.09090465e+00f},
-};
-
-static const float blackbody_table_b[6][4] = {
-    {0.0f, 0.0f, 0.0f, 0.0f},
-    {0.0f, 0.0f, 0.0f, 0.0f},
-    {0.0f, 0.0f, 0.0f, 0.0f},
-    {-2.02524603e-11f, 1.79435860e-07f, -2.60561875e-04f, -1.41761141e-02f},
-    {-2.22463426e-13f, -1.55078698e-08f, 3.81675160e-04f, -7.30646033e-01f},
-    {6.72595954e-13f, -2.73059993e-08f, 4.24068546e-04f, -7.52204323e-01f},
-};
-
-static void blackbody_temperature_to_rgb(float rgb[3], float t)
-{
-  if (t >= 12000.0f) {
-    rgb[0] = 0.826270103f;
-    rgb[1] = 0.994478524f;
-    rgb[2] = 1.56626022f;
-  }
-  else if (t < 965.0f) {
-    rgb[0] = 4.70366907f;
-    rgb[1] = 0.0f;
-    rgb[2] = 0.0f;
-  }
-  else {
-    int i = (t >= 6365.0f) ?
-                5 :
-                (t >= 3315.0f) ? 4 :
-                                 (t >= 1902.0f) ? 3 : (t >= 1449.0f) ? 2 : (t >= 1167.0f) ? 1 : 0;
-
-    const float *r = blackbody_table_r[i];
-    const float *g = blackbody_table_g[i];
-    const float *b = blackbody_table_b[i];
-
-    const float t_inv = 1.0f / t;
-    rgb[0] = r[0] * t_inv + r[1] * t + r[2];
-    rgb[1] = g[0] * t_inv + g[1] * t + g[2];
-    rgb[2] = ((b[0] * t + b[1]) * t + b[2]) * t + b[3];
-  }
-}
-
-void blackbody_temperature_to_rgb_table(float *r_table, int width, float min, float max)
-{
-  for (int i = 0; i < width; i++) {
-    float temperature = min + (max - min) / (float)width * (float)i;
-
-    float rgb[3];
-    blackbody_temperature_to_rgb(rgb, temperature);
-
-    copy_v3_v3(&r_table[i * 4], rgb);
-    r_table[i * 4 + 3] = 0.0f;
   }
 }
